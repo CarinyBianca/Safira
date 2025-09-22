@@ -7,16 +7,16 @@ function App() {
   const [apiStatus, setApiStatus] = useState({ loading: false, ok: false, message: '' });
 
   useEffect(() => {
-    // Teste simples de conexão com a API
+    // Teste simples de conexão com a API (endpoint público)
     const testApi = async () => {
       setApiStatus({ loading: true, ok: false, message: '' });
       try {
-        const res = await api.get('projects/');
-        const count = Array.isArray(res.data) ? res.data.length : (res.data?.results?.length ?? 0);
-        setApiStatus({ loading: false, ok: true, message: `Conectado. Projetos retornados: ${count}` });
+        const res = await api.get('health/');
+        const status = res.data?.status || 'desconhecido';
+        setApiStatus({ loading: false, ok: true, message: `Conectado. Status: ${status}` });
       } catch (err) {
         const msg = err?.response?.status
-          ? `Erro ${err.response.status} ao conectar em /api/projects/`
+          ? `Erro ${err.response.status} ao conectar em /api/health/`
           : 'Não foi possível alcançar a API (backend está rodando?)';
         setApiStatus({ loading: false, ok: false, message: msg });
       }
@@ -76,7 +76,7 @@ function App() {
           ) : (
             <p style={{ color: apiStatus.ok ? '#16a34a' : '#dc2626' }}>{apiStatus.message}</p>
           )}
-          <p style={{ fontSize: 12, color: '#6b7280' }}>Endpoint testado: /api/projects/</p>
+          <p style={{ fontSize: 12, color: '#6b7280' }}>Endpoint testado: /api/health/</p>
         </div>
       ),
     },

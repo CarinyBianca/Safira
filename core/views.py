@@ -1,5 +1,5 @@
-# backend/core/views.py
 from rest_framework import viewsets, permissions, status
+from rest_framework.views import APIView
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -105,3 +105,14 @@ class TaskViewSet(viewsets.ModelViewSet):
         if project not in self.request.user.projects.all():
             raise PermissionDenied("Você não tem permissão para criar tarefas neste projeto.")
         serializer.save()
+
+
+class HealthView(APIView):
+    """Endpoint público para verificação de saúde da API."""
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        return Response({
+            "status": "ok",
+            "service": "safira-api",
+        })
