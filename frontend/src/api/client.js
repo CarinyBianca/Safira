@@ -11,4 +11,29 @@ const api = axios.create({
   },
 });
 
+// Anexa o token (se existir) para autenticação via DRF TokenAuth
+api.interceptors.request.use((config) => {
+  try {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      config.headers.Authorization = `Token ${token}`;
+    }
+  } catch (_) {
+    // ignore
+  }
+  return config;
+});
+
+// Tratamento simples de 401 para feedback (opcional: redirecionar para login)
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err?.response?.status === 401) {
+      // eslint-disable-next-line no-console
+      console.warn('Não autorizado. Verifique o token de autenticação.');
+    }
+    return Promise.reject(err);
+  }
+);
+
 export default api;

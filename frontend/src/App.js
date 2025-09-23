@@ -1,84 +1,45 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Tabs from './components/Tabs';
-import api from './api/client';
+import Overview from './pages/Overview';
+import Projects from './pages/Projects';
+import Tasks from './pages/Tasks';
+import UsersList from './pages/UsersList';
+import ApiStatus from './pages/ApiStatus';
+import Login from './pages/Login';
 
 function App() {
   const [activeTab, setActiveTab] = useState('overview');
-  const [apiStatus, setApiStatus] = useState({ loading: false, ok: false, message: '' });
-
-  useEffect(() => {
-    // Teste simples de conexão com a API (endpoint público)
-    const testApi = async () => {
-      setApiStatus({ loading: true, ok: false, message: '' });
-      try {
-        const res = await api.get('health/');
-        const status = res.data?.status || 'desconhecido';
-        setApiStatus({ loading: false, ok: true, message: `Conectado. Status: ${status}` });
-      } catch (err) {
-        const msg = err?.response?.status
-          ? `Erro ${err.response.status} ao conectar em /api/health/`
-          : 'Não foi possível alcançar a API (backend está rodando?)';
-        setApiStatus({ loading: false, ok: false, message: msg });
-      }
-    };
-    testApi();
-  }, []);
 
   const tabs = [
     {
       key: 'overview',
       label: 'Início',
-      content: (
-        <div>
-          <h1>Bem-vindo ao Gerenciador de Tarefas Safira!</h1>
-          <p style={{ color: '#6b7280' }}>Use as abas para navegar entre seções.</p>
-        </div>
-      ),
+      content: <Overview />,
+    },
+    {
+      key: 'login',
+      label: 'Login',
+      content: <Login />,
     },
     {
       key: 'projects',
       label: 'Projetos',
-      content: (
-        <div>
-          <h2>Projetos</h2>
-          <p>Conteúdo de projetos vai aqui.</p>
-        </div>
-      ),
+      content: <Projects />,
     },
     {
       key: 'tasks',
       label: 'Tarefas',
-      content: (
-        <div>
-          <h2>Tarefas</h2>
-          <p>Conteúdo de tarefas vai aqui.</p>
-        </div>
-      ),
+      content: <Tasks />,
     },
     {
       key: 'users',
       label: 'Usuários',
-      content: (
-        <div>
-          <h2>Usuários</h2>
-          <p>Conteúdo de usuários vai aqui.</p>
-        </div>
-      ),
+      content: <UsersList />,
     },
     {
       key: 'api',
       label: 'Status API',
-      content: (
-        <div>
-          <h2>Status da API</h2>
-          {apiStatus.loading ? (
-            <p>Verificando conexão...</p>
-          ) : (
-            <p style={{ color: apiStatus.ok ? '#16a34a' : '#dc2626' }}>{apiStatus.message}</p>
-          )}
-          <p style={{ fontSize: 12, color: '#6b7280' }}>Endpoint testado: /api/health/</p>
-        </div>
-      ),
+      content: <ApiStatus />,
     },
   ];
 
