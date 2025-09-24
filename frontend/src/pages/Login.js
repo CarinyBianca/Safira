@@ -7,6 +7,7 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [token, setToken] = useState('');
+  const [fieldError, setFieldError] = useState('');
 
   useEffect(() => {
     try {
@@ -19,8 +20,15 @@ function Login() {
     e.preventDefault();
     setLoading(true);
     setMessage('');
+    setFieldError('');
     try {
-      const res = await api.post('auth/', { username, password });
+      const u = username.trim();
+      const p = password;
+      if (u.length < 3 || p.length < 3) {
+        setFieldError('Usuário e senha devem ter pelo menos 3 caracteres.');
+        return;
+      }
+      const res = await api.post('auth/', { username: u, password: p });
       const tok = res.data?.token;
       if (tok) {
         localStorage.setItem('authToken', tok);
@@ -67,12 +75,15 @@ function Login() {
         <div style={{ display: 'grid', gap: 12 }}>
           <div>
             <label style={{ display: 'block', fontSize: 12, color: '#6b7280' }}>Usuário</label>
-            <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Usuário" required style={{ width: '100%', padding: 8 }} />
+            <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Usuário" required minLength={3} style={{ width: '100%', padding: 8, borderColor: fieldError ? '#ef4444' : '#e5e7eb', borderWidth: 1, borderStyle: 'solid', borderRadius: 6 }} />
           </div>
           <div>
             <label style={{ display: 'block', fontSize: 12, color: '#6b7280' }}>Senha</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Senha" required style={{ width: '100%', padding: 8 }} />
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Senha" required minLength={3} style={{ width: '100%', padding: 8, borderColor: fieldError ? '#ef4444' : '#e5e7eb', borderWidth: 1, borderStyle: 'solid', borderRadius: 6 }} />
           </div>
+          {fieldError && (
+            <div style={{ color: '#b91c1c', fontSize: 12 }}>{fieldError}</div>
+          )}
           <div style={{ display: 'flex', gap: 8 }}>
             <button type="submit" disabled={loading} style={{ padding: '8px 12px', background: '#2563eb', color: 'white', border: 0, borderRadius: 6, cursor: 'pointer' }}>
               {loading ? 'Entrando...' : 'Entrar'}

@@ -30,6 +30,8 @@ function TasksManager() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({ project: '', title: '' });
 
   const selectedProjectUsers = useMemo(() => {
     const project = projects.find((p) => String(p.id) === String(form.project));
@@ -39,6 +41,7 @@ function TasksManager() {
   const loadInitial = async () => {
     setLoading(true);
     setError('');
+    setSuccess('');
     try {
       const [projRes, taskRes] = await Promise.all([
         api.get('projects/'),
@@ -63,26 +66,48 @@ function TasksManager() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+    if (name in fieldErrors) {
+      setFieldErrors((prev) => ({ ...prev, [name]: '' }));
+    }
   };
 
   const handleSelectProject = (e) => {
     const value = e.target.value;
     setForm((prev) => ({ ...prev, project: value, assigned_to: '' }));
+    setFieldErrors((prev) => ({ ...prev, project: '' }));
   };
 
   const resetForm = () => setForm(emptyForm);
 
+  const validateForm = () => {
+    const errs = { project: '', title: '' };
+    const title = (form.title || '').trim();
+    if (!form.project) {
+      errs.project = 'Selecione um projeto.';
+    }
+    if (!title) {
+      errs.title = 'Informe um título.';
+    } else if (title.length < 3) {
+      errs.title = 'O título deve ter pelo menos 3 caracteres.';
+    } else if (title.length > 255) {
+      errs.title = 'O título deve ter no máximo 255 caracteres.';
+    }
+    setFieldErrors(errs);
+    return !errs.project && !errs.title;
+  };
+
   const saveTask = async (e) => {
     e.preventDefault();
-    if (!form.project) return setError('Selecione um projeto.');
-    if (!form.title.trim()) return setError('Informe um título.');
+    setError('');
+    setSuccess('');
+    if (!validateForm()) return;
 
     setSaving(true);
     setError('');
     const payload = {
       project: Number(form.project),
-      title: form.title,
-      description: form.description || '',
+      title: form.title.trim(),
+      description: (form.description || '').trim(),
       assigned_to: form.assigned_to ? Number(form.assigned_to) : null,
       status: form.status,
       priority: form.priority,
@@ -93,10 +118,12 @@ function TasksManager() {
         // update
         const res = await api.put(`tasks/${form.id}/`, payload);
         setTasks((prev) => prev.map((t) => (t.id === form.id ? res.data : t)));
+        setSuccess('Tarefa atualizada com sucesso.');
       } else {
         // create
         const res = await api.post('tasks/', payload);
         setTasks((prev) => [res.data, ...prev]);
+        setSuccess('Tarefa criada com sucesso.');
       }
       resetForm();
     } catch (e) {
@@ -129,6 +156,7 @@ function TasksManager() {
       await api.delete(`tasks/${taskId}/`);
       setTasks((prev) => prev.filter((t) => t.id !== taskId));
       if (form.id === taskId) resetForm();
+      setSuccess('Tarefa excluída com sucesso.');
     } catch (e) {
       setError('Erro ao excluir tarefa.');
     }
@@ -138,6 +166,7 @@ function TasksManager() {
     try {
       const res = await api.patch(`tasks/${task.id}/`, patch);
       setTasks((prev) => prev.map((t) => (t.id === task.id ? res.data : t)));
+      setSuccess('Tarefa atualizada.');
     } catch (e) {
       setError('Não foi possível atualizar a tarefa.');
     }
@@ -154,26 +183,37 @@ function TasksManager() {
               {error}
             </div>
           )}
+          {success && (
+            <div style={{ background: '#ecfdf5', color: '#065f46', padding: 8, borderRadius: 6, marginBottom: 12 }}>
+              {success}
+            </div>
+          )}
 
           <div style={{ display: 'grid', gap: 12 }}>
             <div>
               <label style={{ display: 'block', fontSize: 12, color: '#6b7280' }}>Projeto</label>
-              <select name="project" value={form.project} onChange={handleSelectProject} required style={{ width: '100%', padding: 8 }}>
+              <select name="project" value={form.project} onChange={handleSelectProject} required style={{ width: '100%', padding: 8, borderColor: fieldErrors.project ? '#ef4444' : '#e5e7eb', borderWidth: 1, borderStyle: 'solid', borderRadius: 6 }}>
                 <option value="">Selecione...</option>
                 {projects.map((p) => (
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
               </select>
+              {fieldErrors.project && (
+                <div style={{ color: '#b91c1c', fontSize: 12, marginTop: 4 }}>{fieldErrors.project}</div>
+              )}
             </div>
 
             <div>
               <label style={{ display: 'block', fontSize: 12, color: '#6b7280' }}>Título</label>
-              <input name="title" value={form.title} onChange={handleChange} placeholder="Título da tarefa" required style={{ width: '100%', padding: 8 }} />
+              <input name="title" value={form.title} onChange={handleChange} placeholder="Título da tarefa" required minLength={3} maxLength={255} style={{ width: '100%', padding: 8, borderColor: fieldErrors.title ? '#ef4444' : '#e5e7eb', borderWidth: 1, borderStyle: 'solid', borderRadius: 6 }} />
+              {fieldErrors.title && (
+                <div style={{ color: '#b91c1c', fontSize: 12, marginTop: 4 }}>{fieldErrors.title}</div>
+              )}
             </div>
 
             <div>
               <label style={{ display: 'block', fontSize: 12, color: '#6b7280' }}>Descrição</label>
-              <textarea name="description" value={form.description} onChange={handleChange} placeholder="Descrição (opcional)" rows={3} style={{ width: '100%', padding: 8 }} />
+              <textarea name="description" value={form.description} onChange={handleChange} placeholder="Descrição (opcional)" rows={3} maxLength={2000} style={{ width: '100%', padding: 8 }} />
             </div>
 
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>

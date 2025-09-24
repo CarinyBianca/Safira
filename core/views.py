@@ -116,3 +116,30 @@ class HealthView(APIView):
             "status": "ok",
             "service": "safira-api",
         })
+
+
+class RegisterView(APIView):
+    """Endpoint público para registrar um novo usuário e retornar Token."""
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        username = (request.data.get('username') or '').strip()
+        password = request.data.get('password') or ''
+        email = (request.data.get('email') or '').strip() or ''
+
+        if len(username) < 3 or len(password) < 3:
+            return Response({
+                'detail': 'Usuário e senha devem ter pelo menos 3 caracteres.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if User.objects.filter(username=username).exists():
+            return Response({'detail': 'Usuário já existe.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.create_user(username=username, password=password, email=email)
+        token, _ = Token.objects.get_or_create(user=user)
+        return Response({
+            'token': token.key,
+            'user_id': user.pk,
+            'email': user.email,
+            'username': user.username,
+        }, status=status.HTTP_201_CREATED)

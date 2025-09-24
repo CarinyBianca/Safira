@@ -8,10 +8,13 @@ function ProjectsManager() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({ name: '' });
 
   const loadProjects = async () => {
     setLoading(true);
     setError('');
+    setSuccess('');
     try {
       const res = await api.get('projects/');
       setProjects(res.data || []);
@@ -32,27 +35,52 @@ function ProjectsManager() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((p) => ({ ...p, [name]: value }));
+    // Limpa erro de campo ao editar
+    if (name in fieldErrors) {
+      setFieldErrors((prev) => ({ ...prev, [name]: '' }));
+    }
   };
 
   const resetForm = () => setForm(emptyForm);
 
+  const validateForm = () => {
+    const errs = { name: '' };
+    const name = (form.name || '').trim();
+    if (!name) {
+      errs.name = 'Informe o nome do projeto.';
+    } else if (name.length < 3) {
+      errs.name = 'O nome do projeto deve ter pelo menos 3 caracteres.';
+    } else if (name.length > 255) {
+      errs.name = 'O nome do projeto deve ter no máximo 255 caracteres.';
+    }
+    setFieldErrors(errs);
+    return !errs.name;
+  };
+
   const saveProject = async (e) => {
     e.preventDefault();
-    if (!form.name.trim()) return setError('Informe o nome do projeto.');
-    setSaving(true);
     setError('');
-    const payload = { name: form.name, description: form.description || '' };
+    setSuccess('');
+    if (!validateForm()) {
+      return;
+    }
+    setSaving(true);
+    const payload = { name: form.name.trim(), description: (form.description || '').trim() };
     try {
       if (form.id) {
         const res = await api.put(`projects/${form.id}/`, payload);
         setProjects((prev) => prev.map((p) => (p.id === form.id ? res.data : p)));
+        setSuccess('Projeto atualizado com sucesso.');
       } else {
         const res = await api.post('projects/', payload);
         setProjects((prev) => [res.data, ...prev]);
+        setSuccess('Projeto criado com sucesso.');
       }
       resetForm();
     } catch (e) {
-      setError(e?.response?.data?.detail || 'Erro ao salvar projeto.');
+      const apiErr = e?.response?.data;
+      const msg = apiErr?.name?.[0] || apiErr?.detail || 'Erro ao salvar projeto.';
+      setError(msg);
     } finally {
       setSaving(false);
     }
@@ -66,6 +94,7 @@ function ProjectsManager() {
       await api.delete(`projects/${id}/`);
       setProjects((prev) => prev.filter((p) => p.id !== id));
       if (form.id === id) resetForm();
+      setSuccess('Projeto excluído com sucesso.');
     } catch (e) {
       setError('Erro ao excluir projeto.');
     }
@@ -96,6 +125,11 @@ function ProjectsManager() {
           {error}
         </div>
       )}
+      {success && (
+        <div style={{ background: '#ecfdf5', color: '#065f46', padding: 8, borderRadius: 6, marginBottom: 12 }}>
+          {success}
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
         <form onSubmit={saveProject} style={{ flex: '1 1 340px', minWidth: 320, border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
@@ -103,11 +137,14 @@ function ProjectsManager() {
           <div style={{ display: 'grid', gap: 12 }}>
             <div>
               <label style={{ display: 'block', fontSize: 12, color: '#6b7280' }}>Nome</label>
-              <input name="name" value={form.name} onChange={handleChange} placeholder="Nome do projeto" required style={{ width: '100%', padding: 8 }} />
+              <input name="name" value={form.name} onChange={handleChange} placeholder="Nome do projeto" required minLength={3} maxLength={255} style={{ width: '100%', padding: 8, borderColor: fieldErrors.name ? '#ef4444' : '#e5e7eb', borderWidth: 1, borderStyle: 'solid', borderRadius: 6 }} />
+              {fieldErrors.name && (
+                <div style={{ color: '#b91c1c', fontSize: 12, marginTop: 4 }}>{fieldErrors.name}</div>
+              )}
             </div>
             <div>
               <label style={{ display: 'block', fontSize: 12, color: '#6b7280' }}>Descrição</label>
-              <textarea name="description" value={form.description} onChange={handleChange} placeholder="Descrição (opcional)" rows={3} style={{ width: '100%', padding: 8 }} />
+              <textarea name="description" value={form.description} onChange={handleChange} placeholder="Descrição (opcional)" rows={3} maxLength={2000} style={{ width: '100%', padding: 8 }} />
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button type="submit" disabled={saving} style={{ padding: '8px 12px', background: '#2563eb', color: 'white', border: 0, borderRadius: 6, cursor: 'pointer' }}>
