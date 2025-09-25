@@ -27,9 +27,9 @@ function ApiStatus() {
       {apiStatus.loading ? (
         <p>Verificando conexão...</p>
       ) : (
-        <p style={{ color: apiStatus.ok ? '#16a34a' : '#dc2626' }}>{apiStatus.message}</p>
+        <p className={apiStatus.ok ? 'text-success' : 'text-danger'}>{apiStatus.message}</p>
       )}
-      <p style={{ fontSize: 12, color: '#6b7280' }}>Endpoint testado: /api/health/</p>
+      <p className="text-muted" style={{ fontSize: 12 }}>Endpoint testado: /api/health/</p>
     </div>
   );
 }

@@ -84,7 +84,7 @@ function App() {
         onChange={setActiveTab}
         hiddenKeys={['login', 'signup', 'api']}
       />
-      <div style={{ maxWidth: 960, margin: '0 auto', padding: 16 }}>
+      <main className="container">
         <Tabs
           tabs={tabs}
           activeTab={activeTab}
@@ -92,7 +92,7 @@ function App() {
           hiddenKeys={['login', 'signup', 'api']}
           showHeader={false}
         />
-      </div>
+      </main>
     </div>
   );
 }
