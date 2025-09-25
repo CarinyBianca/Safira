@@ -79,9 +79,19 @@ function App() {
         onSignup={() => setActiveTab('signup')}
         onSignOut={handleSignOut}
         onLogoClick={() => setActiveTab('overview')}
+        tabs={tabs}
+        activeTab={activeTab}
+        onChange={setActiveTab}
+        hiddenKeys={['login', 'signup', 'api']}
       />
       <div style={{ maxWidth: 960, margin: '0 auto', padding: 16 }}>
-        <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+        <Tabs
+          tabs={tabs}
+          activeTab={activeTab}
+          onChange={setActiveTab}
+          hiddenKeys={['login', 'signup', 'api']}
+          showHeader={false}
+        />
       </div>
     </div>
   );
