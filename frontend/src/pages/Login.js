@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api/client';
 
-function Login() {
+function Login({ onAuth, onNavigateSignup }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -36,6 +36,7 @@ function Login() {
         setMessage('Autenticado com sucesso. Token salvo no navegador.');
         setUsername('');
         setPassword('');
+        if (onAuth) onAuth(tok);
       } else {
         setMessage('Resposta inválida do servidor.');
       }
@@ -100,6 +101,15 @@ function Login() {
       <p style={{ fontSize: 12, color: '#6b7280', marginTop: 12 }}>
         Dica: se precisar criar um admin: <code>manage.py createsuperuser</code> e depois autentique com esse usuário.
       </p>
+
+      {!token && (
+        <p style={{ fontSize: 14, marginTop: 12 }}>
+          Não tem conta?{' '}
+          <a href="#" onClick={(e) => { e.preventDefault(); if (onNavigateSignup) onNavigateSignup(); }} style={{ color: '#2563eb' }}>
+            Cadastre-se
+          </a>
+        </p>
+      )}
     </div>
   );
 }

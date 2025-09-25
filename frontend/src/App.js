@@ -1,14 +1,37 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Tabs from './components/Tabs';
+import Navbar from './components/Navbar';
 import Overview from './pages/Overview';
 import Projects from './pages/Projects';
 import Tasks from './pages/Tasks';
 import UsersList from './pages/UsersList';
 import ApiStatus from './pages/ApiStatus';
 import Login from './pages/Login';
+import Signup from './pages/Signup';
 
 function App() {
   const [activeTab, setActiveTab] = useState('overview');
+  const [token, setToken] = useState('');
+
+  useEffect(() => {
+    try {
+      const t = localStorage.getItem('authToken') || '';
+      setToken(t || '');
+    } catch (_) {}
+  }, []);
+
+  const handleAuth = (tok) => {
+    setToken(tok || '');
+    if (tok) {
+      setActiveTab('overview');
+    }
+  };
+
+  const handleSignOut = () => {
+    try { localStorage.removeItem('authToken'); } catch (_) {}
+    setToken('');
+    setActiveTab('overview');
+  };
 
   const tabs = [
     {
@@ -19,7 +42,12 @@ function App() {
     {
       key: 'login',
       label: 'Login',
-      content: <Login />,
+      content: <Login onAuth={handleAuth} onNavigateSignup={() => setActiveTab('signup')} />,
+    },
+    {
+      key: 'signup',
+      label: 'Cadastro',
+      content: <Signup onAuth={handleAuth} />,
     },
     {
       key: 'projects',
@@ -44,8 +72,17 @@ function App() {
   ];
 
   return (
-    <div style={{ maxWidth: 960, margin: '0 auto', padding: 16 }}>
-      <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+    <div>
+      <Navbar
+        isAuthenticated={!!token}
+        onLogin={() => setActiveTab('login')}
+        onSignup={() => setActiveTab('signup')}
+        onSignOut={handleSignOut}
+        onLogoClick={() => setActiveTab('overview')}
+      />
+      <div style={{ maxWidth: 960, margin: '0 auto', padding: 16 }}>
+        <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+      </div>
     </div>
   );
 }
