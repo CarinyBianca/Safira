@@ -1,11 +1,10 @@
 import React from 'react';
-import ProjectsManager from '../components/ProjectsManager';
+import ProjectsList from '../components/ProjectsList';
 
 function Projects() {
   return (
     <div>
-      <h2>Projetos</h2>
-      <ProjectsManager />
+      <ProjectsList />
     </div>
   );
 }
