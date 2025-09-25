@@ -1,35 +1,40 @@
 import React, { useEffect, useState } from 'react';
-import api from '../api/client';
+import axios from 'axios';
 
 function ApiStatus() {
-  const [apiStatus, setApiStatus] = useState({ loading: false, ok: false, message: '' });
+  const [status, setStatus] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const testApi = async () => {
-      setApiStatus({ loading: true, ok: false, message: '' });
+    let mounted = true;
+    async function checkHealth() {
       try {
-        const res = await api.get('health/');
-        const status = res.data?.status || 'desconhecido';
-        setApiStatus({ loading: false, ok: true, message: `Conectado. Status: ${status}` });
+        const resp = await axios.get('/api/health/');
+        if (!mounted) return;
+        setStatus(resp.data || { ok: true });
       } catch (err) {
-        const msg = err?.response?.status
-          ? `Erro ${err.response.status} ao conectar em /api/health/`
-          : 'Não foi possível alcançar a API (backend está rodando?)';
-        setApiStatus({ loading: false, ok: false, message: msg });
+        if (!mounted) return;
+        setError(err?.response?.data || { error: 'Falha ao verificar API' });
       }
-    };
-    testApi();
+    }
+    checkHealth();
+    return () => { mounted = false; };
   }, []);
 
   return (
-    <div>
+    <div style={{ padding: '1rem' }}>
       <h2>Status da API</h2>
-      {apiStatus.loading ? (
-        <p>Verificando conexão...</p>
-      ) : (
-        <p className={apiStatus.ok ? 'text-success' : 'text-danger'}>{apiStatus.message}</p>
+      {status && (
+        <pre style={{ background: '#f6f8fa', padding: '12px', borderRadius: 6 }}>
+{JSON.stringify(status, null, 2)}
+        </pre>
       )}
-      <p className="text-muted" style={{ fontSize: 12 }}>Endpoint testado: /api/health/</p>
+      {error && (
+        <pre style={{ background: '#fff5f5', padding: '12px', borderRadius: 6, color: '#b00020' }}>
+{JSON.stringify(error, null, 2)}
+        </pre>
+      )}
+      {!status && !error && <p>Verificando...</p>}
     </div>
   );
 }
